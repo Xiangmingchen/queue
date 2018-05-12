@@ -12,6 +12,7 @@ import { Link } from '../routes'
 import makeStore from '../redux/makeStore'
 import { fetchCourseRequest, fetchCourse } from '../actions/course'
 import { createQueue, deleteQueue, updateQueue } from '../actions/queue'
+import { mapObjectToArray } from '../util'
 
 import PageWithUser from '../components/PageWithUser'
 import Loading from '../components/Loading'
@@ -66,6 +67,13 @@ class Course extends React.Component {
       return <Error statusCode={404} />
     }
 
+    const openQueueIds = this.props.queues
+      .filter(queue => queue.open)
+      .map(queue => queue.id)
+    const closedQueueIds = this.props.queues
+      .filter(queue => !queue.open)
+      .map(queue => queue.id)
+
     return (
       <Layout>
         <Container>
@@ -88,7 +96,9 @@ class Course extends React.Component {
             </ShowForCourseStaff>
           </div>
           <div className="d-flex flex-wrap align-items-center mb-4">
-            <h2 className="d-inline-block mb-0 mt-3 mr-auto pr-3">Queues</h2>
+            <h2 className="d-inline-block mb-0 mt-3 mr-auto pr-3">
+              Open Queues
+            </h2>
             <ShowForCourseStaff courseId={this.props.courseId}>
               <Button
                 color="primary"
@@ -114,7 +124,19 @@ class Course extends React.Component {
             </Card>
           )}
           <Row className="equal-height mb-5">
-            <QueueCardListContainer queueIds={this.props.course.queues} />
+            <QueueCardListContainer queueIds={openQueueIds} openQueue />
+          </Row>
+          <div className="d-flex flex-wrap align-items-center mb-4">
+            <h2 className="d-inline-block mb-0 mt-3 mr-auto pr-3">
+              Closed Queues
+            </h2>
+          </div>
+
+          <Row className="equal-height mb-5">
+            <QueueCardListContainer
+              queueIds={closedQueueIds}
+              openQueue={false}
+            />
           </Row>
           <CourseShortCodeInfo course={this.props.course} />
         </Container>
@@ -147,6 +169,7 @@ Course.propTypes = {
     PropTypes.shape({
       name: PropTypes.string,
       location: PropTypes.location,
+      open: PropTypes.boolean,
     })
   ),
   isFetching: PropTypes.bool,
@@ -156,7 +179,7 @@ Course.propTypes = {
 
 Course.defaultProps = {
   course: null,
-  queues: null,
+  queues: [],
   isFetching: true,
 }
 
@@ -164,7 +187,7 @@ const mapStateToProps = (state, ownProps) => {
   const course = state.courses.courses[ownProps.courseId]
   return {
     course,
-    queues: state.queues.queues,
+    queues: mapObjectToArray(state.queues.queues),
     isFetching: state.courses.isFetching || state.queues.isFetching,
   }
 }
